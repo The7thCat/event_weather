@@ -13,3 +13,5 @@ to get an idea what you might face. Currently this implementation will use metos
 and not yet implemented.
 
 When this works as inteded other data will be added like wind, humidity, rain, etc.
+
+IMPORTANT: You need to make a .env with your emailadress which will be imported to meet the MET Norway terms of service. See main.py for the import var.
