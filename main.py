@@ -2,7 +2,7 @@ import streamlit as st
 import os
 from datetime import time, date, timedelta, datetime, timezone
 from get_data import get_coordinates, fetch_weather_data, extract_hourly_weather
-from get_hist_data import get_historical_hourly_temperature
+from get_hist_data import get_historical_hourly_temperature, get_avail_dates
 import pandas as pd
 import plotly.express as px
 
@@ -34,6 +34,13 @@ end_datetime_utc = datetime.combine(event_end_date, time(23, 0)).replace(tzinfo=
 # format time for meteostat
 start_naive = start_datetime_utc.replace(tzinfo=None)
 end_naive = end_datetime_utc.replace(tzinfo=None)
+
+# calc difference
+event_length = end_naive - start_naive
+
+# define years for historical forecast, default 10y
+hist_start_naive = start_naive + timedelta(days=3650)
+hist_end_naive = end_naive + timedelta(days=3650)
 
 # Buttons
 col1, col2, col3 = st.columns([1, 1, 1])
@@ -95,9 +102,10 @@ if historical_button:
 		if lat is None or lon is None:
 			st.error("City not found.")
 		else:
-			hist_df = get_historical_hourly_temperature(lat, lon, start_naive, end_naive)
-			if hist_df is None or hist_df.empty:
-				st.warning("No historical data found.")
+			first_available_year, last_available_year = get_avail_dates(lat, lon)
+			hist_df = get_historical_hourly_temperature(lat, lon, hist_start_naive, hist_end_naive, first_available_year, last_available_year)
+			if first_available_year is None or last_available_year is None:
+				st.warning("No station data available.")
 			else:
 				total_days = (event_end_date - event_start_date).days + 1
 				days_list = [event_start_date + timedelta(days=i) for i in range(total_days)]
