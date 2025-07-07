@@ -4,7 +4,9 @@ from meteostat import Point, Hourly, Stations
 # historical data form meteostat
 
 def get_historical_hourly_temperature(lat, lon, hist_start_naive, hist_end_naive, first_available_year, last_available_year):
-	historical_city = Point(lat, lon)
+	# historical_city = Point(lat, lon)
+	stations = Stations().nearby(lat, lon).fetch(1)
+	historical_city = stations.index[0]
 	hist_end_naive, hist_start_naive = check_avail_years(first_available_year, last_available_year, hist_end_naive, hist_start_naive)
 	data = Hourly(historical_city, hist_start_naive, hist_end_naive)
 	hist_weather_data = data.fetch()
@@ -15,7 +17,6 @@ def get_historical_hourly_temperature(lat, lon, hist_start_naive, hist_end_naive
 
 #theory crafting check for earliest available data
 def get_avail_dates(lat, lon):
-	# location = Point(lat, lon)
 	stations = Stations().nearby(lat, lon).fetch(1)
 	if stations.empty:
 		return None, None

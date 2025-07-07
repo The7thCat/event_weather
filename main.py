@@ -39,8 +39,8 @@ end_naive = end_datetime_utc.replace(tzinfo=None)
 event_length = end_naive - start_naive
 
 # define years for historical forecast, default 10y
-hist_start_naive = start_naive + timedelta(days=3650)
-hist_end_naive = end_naive + timedelta(days=3650)
+hist_start_naive = start_naive - timedelta(days=3650)
+hist_end_naive = end_naive - timedelta(days=3650)
 
 # Buttons
 col1, col2, col3 = st.columns([1, 1, 1])
@@ -104,24 +104,33 @@ if historical_button:
 		else:
 			first_available_year, last_available_year = get_avail_dates(lat, lon)
 			hist_df = get_historical_hourly_temperature(lat, lon, hist_start_naive, hist_end_naive, first_available_year, last_available_year)
+			
+			#st.dataframe(hist_df) # DEBUG
+
 			if first_available_year is None or last_available_year is None:
 				st.warning("No station data available.")
+			elif hist_df is None:
+				st.warning("No historical data available.")
+				st.stop()
 			else:
 				total_days = (event_end_date - event_start_date).days + 1
 				days_list = [event_start_date + timedelta(days=i) for i in range(total_days)]
 
 				for single_date in days_list:
-					day_df = hist_df[hist_df["date"] == single_date]
+					historical_date = (single_date - timedelta(days=3650))
+					day_df = hist_df.loc[hist_df.index.date == historical_date]
+					day_df["time"] = day_df.index # index to column
+
 					if day_df.empty:
-						st.write(f"No historical data for {single_date.strftime('%A, %d.%m.%Y')}")
+						st.write(f"No historical data for {historical_date.strftime('%A, %d.%m.%Y')}")
 						continue
 
 					fig = px.line(
 						day_df,
 						x="time",
-						y="temperature",
-						labels={"time": "Local time", "temperature": "Temperature (°C)"},
-						title=f"Historical weather on {single_date.strftime('%A, %d.%m.%Y')}",
+						y="temp",
+						labels={"time": "Local time", "temp": "Temperature (°C)"},
+						title=f"Historical weather on {historical_date.strftime('%A, %d.%m.%Y')}",
 					)
 					fig.update_xaxes(tickformat="%H:%M")
 					st.plotly_chart(fig, use_container_width=True)
